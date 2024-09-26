@@ -1,0 +1,19 @@
+use ProtossForge as knowledge.
+use ProtossForge as actionspec.
+
+module ProtossForgeEvent {	
+	% DO NOT REMOVE OR MODIFY THE TWO RULES BELOW
+	forall bel(friendly(Type,Id,Conditions)), not(percept(friendly(Type,Id,Conditions))) do delete(friendly(Type,Id,Conditions)).
+	forall percept(friendly(Type,Id,Conditions)), not(bel(friendly(Type,Id,Conditions))) do insert(friendly(Type,Id,Conditions)).
+	
+	% Handle the resources percept
+	forall bel(resources(M,G,CS,TS)), not(percept(resources(M,G,CS,TS))) do delete(resources(M,G,CS,TS)).
+	forall percept(resources(M ,G,CS,TS)), not(bel(resources(M,G,CS,TS))) do insert(resources(M,G,CS,TS)).
+
+	% Keep the queueSize up-to-date.	
+	forall bel(queueSize(Size)), percept(queueSize(NewSize))
+		do delete(queueSize(Size)) + insert(queueSize(NewSize)).
+		
+	%If the controller wants us to create to upgrade, then upgrade
+	if (_).sent(upgradeTo(Upgrade)) then adopt(upgraded(Upgrade)).
+}

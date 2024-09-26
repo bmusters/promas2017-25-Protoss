@@ -1,0 +1,11 @@
+use ControllerAgent as knowledge.
+exit = always.
+order = linearall.
+
+module Attack {
+
+	% If you have 6 zealots, send to the zealots to start moving towards the enemy and insert allIn.
+	if bel(amountOf('Protoss Zealot', 6), enemyBase(_,_)) then (zealots).send(move) + insert(allIn). 
+
+	if bel(allIn) then (zealots).send(move) + (dragoons).send(move) + (carriers).send(move) + (corsairs).send(move) + (darktemplars).send(move).
+}

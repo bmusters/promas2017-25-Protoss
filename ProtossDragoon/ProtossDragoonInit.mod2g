@@ -1,0 +1,22 @@
+use ProtossDragoon as knowledge.
+
+module ProtossDragoonInit {
+	% Store our own identifier and initial state (updated in event).
+	if percept(self(Id,UnitType,_,_,_)), percept(workerActivity(Activity)) then insert(self(Id)) + ('control').send(dragoonSelf(Id)) + ('control').send(agent(Id, UnitType)).
+
+	% The status percept.
+	if percept(status(Health, Shield, Energy, Cond, X, Y)) then insert(status(Health, Shield, Energy, Cond, X, Y), goTo(X,Y)).	
+	
+	% Self percept, send once. The ID and type of the unit. Also gives information about the maximum health, shield and energy of the unit.
+	forall percept(self(ID, UnitType, MaxHealth, MaxShield, MaxEnergy)) do insert(self(ID, UnitType, MaxHealth, MaxShield, MaxEnergy)).
+	
+	% Recourses percept, send once. 
+	forall percept(resources(Minerals, Gas, Cs, Ts)) do insert(resources(Minerals, Gas, Cs, Ts)).
+	
+	% When initialized, ask the base info from the controller agent.
+	if true then ('control').send(askBaseInfo).
+	
+	% When initialized, subscribe to the dragoons channel.
+	if true then subscribe(dragoons).
+
+}

@@ -1,0 +1,26 @@
+use ProtossZealot as knowledge.
+
+module ProtossZealotInit {
+	% Store our own identifier and initial state (updated in event).
+	if percept(self(Id,UnitType,_,_,_)), percept(workerActivity(Activity)) then insert(self(Id)) + ('control').send(zealotSelf(Id)) + ('control').send(agent(Id, UnitType)).
+	
+	% The status percept.
+	if percept(status(Health, Shield, Energy, Cond, X, Y)) then insert(status(Health, Shield, Energy, Cond, X, Y), goTo(X,Y)).
+	
+	% Self percept, send once. The ID and type of the unit. Also gives information about the maximum health, shield and energy of the unit.
+	if percept(self(ID, UnitType, MaxHealth, MaxShield, MaxEnergy)) then insert(self(ID, UnitType, MaxHealth, MaxShield, MaxEnergy)).
+	
+	% Recourses percept, send once. 
+	forall percept(resources(Minerals, Gas, Cs, Ts)) do insert(resources(Minerals, Gas, Cs, Ts)).
+	
+	% Chokepoint percept, send once. 
+	forall percept(chokepoint(X, Y, Width)) do insert(chokepoint(X, Y, Width)).
+	
+	if percept(status(Health, Shield, Energy, Cond, X, Y)) then insert(status(Health, Shield, Energy, Cond, X, Y)).
+	
+	% When initialized ask the base information from the Controller Agent.
+	if true then ('control').send(askBaseInfo).
+	
+	% When the Zealot is initialized it should subscribe itself to the zealots channel.
+	if true then subscribe(zealots).
+}

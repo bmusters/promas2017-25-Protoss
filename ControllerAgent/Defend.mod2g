@@ -1,0 +1,25 @@
+use ControllerAgent as knowledge.
+exit = always.
+order = linearall.
+
+
+module Defend {
+	
+	% If the next item in the list is a Photon Cannon, let one probe build this by sending his id and the coordinates to the probe channel.
+	% Also increment the index and adopt a goal for it and delete the old index.	
+	if bel(nextBuilding('Protoss Photon Cannon'), constructionSite(X,Y,true), resources(M,_,_,_), M>=150,
+		nextStage(Int), Next is Int + 1,probeIds(Id), agent(AgentName, Id, Type)), not(goal(nextStage(Next)))
+			then (probes).send(constructCannon(Id,X,Y)) + adopt(nextStage(Next)) + insert(building('Protoss Photon Cannon', AgentName)).
+	
+	% If the next item in the list is a Shield Battery, let one probe build this by sending his id and the coordinates to the probe channel.
+	% Also increment the index and adopt a goal for it and delete the old index.	
+	if bel(nextBuilding('Protoss Shield Battery'), constructionSite(X,Y,true), resources(M,_,_,_), M>=100,
+		nextStage(Int), Next is Int + 1,probeIds(Id), agent(AgentName, Id, Type)), not(goal(nextStage(Next)))
+			then (probes).send(constructBattery(Id,X,Y)) + adopt(nextStage(Next)) + insert(building('Protoss Shield Battery', AgentName)).
+	
+	% If someone send it is time to counter our own tactic, pick two probes and command them to do so.
+	if (_).sent(counterOwnTactic(EnemyId)), bel(probeIds(Id1), probeIds(Id2), Id1 \= Id2), not(goal(doingCounterOwnTactic))
+		then adopt(doingCounterOwnTactic) + (probes).send(counterOwnTactic(Id1,EnemyId)) + (probes).send(counterOwnTactic(Id2,EnemyId)).
+		
+	if (_).sent(dropCounterOwnTactic) then drop(doingCounterOwnTactic).
+}

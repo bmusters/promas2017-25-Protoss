@@ -1,0 +1,11 @@
+use ProtossNexus as knowledge.
+use ProtossNexus as actionspec.
+
+module ProtossNexus {
+	
+	% If we want a Probe we train one.
+	% We need to have a goal of amountOf('Unit Type', amount) and we need to have enough minerals to train a Probe unit. The amount must be greater than the amount we have in our belief.
+	% Since the queueSize percept can be a bit slower in the game, we have to update it manually so we know for sure that the queueSize works.  
+	if goal(amountOf('Protoss Probe', X)), bel(amountOf('Protoss Probe', Y), X > Y, queueSize(Size), M is Size + 1, Z is Size + Y, Z < X, Size < 2)
+		then train('Protoss Probe') + delete(queueSize(Size)) + insert(queueSize(M)).
+}

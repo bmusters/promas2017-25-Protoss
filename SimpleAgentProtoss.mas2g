@@ -1,0 +1,105 @@
+use "StarCraft.Connector.jar" as environment with
+	map="(2)Destination.scx",
+	own_race="Protoss",
+	enemy_race="Zerg",
+	starcraft_location="C:\Starcraft",
+	auto_menu="Single_Player",
+	debug="true", % launch the developer tool
+	invulnerable="true", % individual assignment only
+	game_speed=50. % default tournament speed
+
+% DO NOT REMOVE OR CHANGE THIS AGENT DEFINITION
+% Defines an agent for the player's main base
+define mainBase as agent {
+	use ProtossNexus.ProtossNexusInit as init module.
+	use ProtossNexus.ProtossNexusEvent as event module.
+	use ProtossNexus.ProtossNexus as main module.
+}
+
+% Define Gateway agent
+define protossGateway as agent {
+	use ProtossGateway.ProtossGateway as main module.
+	use ProtossGateway.ProtossGatewayInit as init module.
+	use ProtossGateway.ProtossGatewayEvent as event module.
+}
+
+% Define Stargate agent
+define protossStargate as agent { 
+	use ProtossStargate.ProtossStargate as main module.
+	use ProtossStargate.ProtossStargateInit as init module.
+	use ProtossStargate.ProtossStargateEvent as event module.
+}
+
+% Define a worker probe agent
+define protossProbe as agent {
+	use ProtossProbe.ProtossProbe as main module.
+	use ProtossProbe.ProtossProbeInit as init module.
+	use ProtossProbe.ProtossProbeEvent as event module.
+} 
+
+% Define controller agent
+define control as agent {
+	use ControllerAgent.ControllerAgent as main module.
+	use ControllerAgent.ControllerAgentInit as init module.
+	use ControllerAgent.ControllerAgentEvent as event module.
+}
+% Define Zealot agent
+define protossZealot as agent {
+	use ProtossZealot.ProtossZealot as main module.
+	use ProtossZealot.ProtossZealotInit as init module.
+	use ProtossZealot.ProtossZealotEvent as event module.
+} 
+
+% Define Dragoon agent
+define protossDragoon as agent {
+	use ProtossDragoon.ProtossDragoon as main module.
+	use ProtossDragoon.ProtossDragoonInit as init module.
+	use ProtossDragoon.ProtossDragoonEvent as event module.
+} 
+
+%Define Dark Templar agent
+define protossDarkTemplar as agent {
+    use ProtossDarkTemplar.ProtossDarkTemplar as main module.
+    use ProtossDarkTemplar.ProtossDarkTemplarInit as init module.
+    use ProtossDarkTemplar.ProtossDarkTemplarEvent as event module.
+}
+
+%Define Carrier agent
+define protossCarrier as agent {
+    use ProtossCarrier.ProtossCarrier as main module.
+    use ProtossCarrier.ProtossCarrierInit as init module.
+    use ProtossCarrier.ProtossCarrierEvent as event module.
+}
+
+		%Define Corsair agent
+define protossCorsair as agent {
+    use ProtossCorsair.ProtossCorsair as main module.
+    use ProtossCorsair.ProtossCorsairInit as init module.
+    use ProtossCorsair.ProtossCorsairEvent as event module.
+}
+
+% Define Forge agent
+define protossForge as agent {
+	use ProtossForge.ProtossForge as main module.
+	use ProtossForge.ProtossForgeInit as init module.
+	use ProtossForge.ProtossForgeEvent as event module.
+}
+
+launchpolicy{
+	% DO NOT REMOVE THIS LAUNCH RULE
+	% Launch an agent for the main base
+	when type = protossNexus launch mainBase.
+	% Launch a probe agent for each worker
+	when type = protossProbe launch protossProbe.
+	% Launch a Gateway agent for each Gateway
+	when type = protossGateway launch protossGateway.
+	% Launch a Zealot agent for each zealot
+	when type = protossZealot launch protossZealot.
+	% Launch a Dragoon agent for each Dragoon
+	when type = protossDragoon launch protossDragoon.
+    % Launch a Dark Templar agent for each Dark Templar
+    when type = protossDarkTemplar launch protossDarkTemplar.
+	% Launch the control agent
+	when type = protossForge launch protossForge.
+	launch control.
+}

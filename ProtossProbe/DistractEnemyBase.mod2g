@@ -1,0 +1,34 @@
+use ProtossProbe as knowledge.
+exit = always.
+order = linearall.
+
+module DistractEnemyBase {
+	
+	% Go walk around the enemy base to detect the enemies.
+	if bel(mapMiddle(X,Y), C is Y - 10), not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(X,C)) + insert(entered(1)).
+	if bel(mapMiddle(X,Y), C is Y - 10, entered(1), status(_,_,_,_,M,N), difference(M,N,X,C,2)) then delete(entered(1)). 
+	
+	if bel(mapMiddle(X,Y), C is Y - 10, D is X - 10),  not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(D,C)) + insert(entered(2)).
+	if bel(mapMiddle(X,Y), C is Y - 10, D is X - 10, entered(2), status(_,_,_,_,M,N), difference(M,N,D,C,2)) then delete(entered(2)).
+	
+	if bel(mapMiddle(X,Y), D is X - 10),  not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(D,Y)) + insert(entered(3)).
+	if bel(mapMiddle(X,Y), D is X - 10, entered(3), status(_,_,_,_,M,N), difference(M,N,D,Y,2))  then delete(entered(3)).
+	
+	if bel(mapMiddle(X,Y), B is Y + 10, D is X - 10),  not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(D,B)) + insert(entered(4)).
+	if bel(mapMiddle(X,Y), B is Y + 10, D is X - 10, entered(4), status(_,_,_,_,M,N), difference(M,N,D,B,2)) then delete(entered(4)).
+	
+	if bel(mapMiddle(X,Y), B is Y + 10),  not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(X,B)) + insert(entered(5)).
+	if bel(mapMiddle(X,Y), B is Y + 10, entered(5), status(_,_,_,_,M,N), difference(M,N,X,B,2))  then delete(entered(5)).
+	
+	if bel(mapMiddle(X,Y), A is X + 10, B is Y + 10),  not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(A,B)) + insert(entered(6)).
+	if bel(mapMiddle(X,Y), A is X + 10, B is Y + 10, entered(6), status(_,_,_,_,M,N), difference(M,N,A,B,2)) then delete(entered(6)).
+	
+	if bel(mapMiddle(X,Y), A is X + 10),  not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(A,Y)) + insert(entered(7)).
+	if bel(mapMiddle(X,Y), A is X + 10, entered(7), status(_,_,_,_,M,N), difference(M,N,A,Y,2))  then delete(entered(7)).
+	
+	if bel(mapMiddle(X,Y), A is X + 10, C is Y - 10),  not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(A,C)) + insert(entered(8)).
+	if bel(mapMiddle(X,Y), A is X + 10, C is Y - 10, entered(8), status(_,_,_,_,M,N), difference(M,N,A,C,2)) then delete(entered(8)).
+	
+	if bel(mapMiddle(X,Y), C is Y - 10), not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(X,C)) + insert(entered(1)).
+
+}

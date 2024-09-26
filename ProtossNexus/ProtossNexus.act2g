@@ -1,0 +1,7 @@
+use ProtossNexus as knowledge.
+
+% The train action:
+% Only execute if the production facility is capable of producing the chosen unit and has sufficient resources to do so.
+define train(Type) with
+	pre { resources(Minerals, Gas, Cs, Ts), Minerals >= 50, (Ts - Cs) > 0}
+	post { true }

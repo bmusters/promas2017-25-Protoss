@@ -1,0 +1,8 @@
+use ProtossForge as knowledge.
+use ProtossForge as actionspec.
+	
+
+module ProtossForge {
+	% If we want to have a upgrade, go upgrade
+	if goal(upgraded(Type)) then upgrade(Type) + insert(upgraded(Type)) + (control).send(upgrading).
+}

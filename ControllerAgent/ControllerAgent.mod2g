@@ -1,0 +1,8 @@
+use ControllerAgent as knowledge.
+module ControllerAgent {
+
+	% If the probe has built the requested building, and we have a goal for an index, 
+	% we want the probe to build the next building in the order, so we insert that index in our belief.
+	if (_).sent(builded), goal(nextStage(Index)) then insert(nextStage(Index)).
+
+}

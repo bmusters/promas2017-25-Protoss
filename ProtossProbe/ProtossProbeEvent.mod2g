@@ -1,0 +1,203 @@
+use ProtossProbe as knowledge.
+use DistractEnemyBase as module.
+use DistractEnemyBaseSmallMap as module.
+
+module ProtossProbeEvent {
+	
+	% The handling of the mineralfields	percepts (update amounts).
+	% Amount is always > 1, as mineralFields dissapear from the game when empty.
+	forall bel(mineralField(Id,Amount,RegionID,X,Y)), not(percept(mineralField(Id,Amount,RegionID,X,Y))) do delete(mineralField(Id,Amount,RegionID,X,Y)).
+	forall percept(mineralField(Id,Amount,RegionID,X,Y)), not(bel(mineralField(Id,Amount,RegionID,X,Y))) do insert(mineralField(Id,Amount,RegionID,X,Y)).
+	
+	% If there is a mineralfield with the same region Id and you are not a scout and you don't have a goal to gather from there, then adopt a goal to gather from there.
+	forall bel(mineralField(Id,Amount,RegionID,X,Y), regionID(RegionID)), not(bel(scout(_);scout2(_))), not(goal(gathered(Id))), not(goal(goTo(_,_))) do adopt(gathered(Id)).
+	
+	% The handling of the workerActivity percept.
+	if percept(workerActivity(NewActivity)), bel(workerActivity(OldActivity), NewActivity \= OldActivity) 
+	then delete(workerActivity(OldActivity)) + insert(workerActivity(NewActivity)).
+	
+	% Resourses, send on change.
+	% The amount of minerals, gas and supply available to the player.
+	forall bel(resources(Minerals, Gas, Cs, Ts)), percept(resources(NewMinerals, NewGas, NewCs, NewTs)) 
+		do delete(resources(Minerals, Gas, Cs, Ts)) + insert(resources(NewMinerals, NewGas, NewCs, NewTs)).
+	
+	% VespeneGeyser, send on change with negation.
+	forall bel(vespeneGeyser(A,B,C,X,Y)), not(percept(vespeneGeyser(A,B,C,X,Y))) do delete(vespeneGeyser(A,B,C,X,Y)) + ('control').send(not(vespeneGeyser(A,B,C,X,Y))).
+	forall percept(vespeneGeyser(A,B,C,X,Y)), not(bel(vespeneGeyser(A,B,C,X,Y))) do insert(vespeneGeyser(A,B,C,X,Y)) + ('control').send(vespeneGeyser(A,B,C,X,Y)).
+	
+	% ConstructionSite, send on change with negation.
+	forall bel(constructionSite(X,Y,B)), not(percept(constructionSite(X,Y,B))) do delete(constructionSite(X,Y,B)) + ('control').send(not(constructionSite(X,Y,B))).
+	forall percept(constructionSite(X,Y,B)), not(bel(constructionSite(X,Y,B))) do insert(constructionSite(X,Y,B)) + ('control').send(constructionSite(X,Y,B)).
+	
+	% Friendly percept, send always.
+	% Information about all the other (alive) units of the player.
+	forall percept(friendly(Type, ID, Condition)), not(bel(friendly(Type, ID, Condition))) do insert(friendly(Type, ID, Condition)).
+	forall bel(friendly(Type, ID, Condition)), not(percept(friendly(Type, ID, Condition))) do delete(friendly(Type, ID, Condition)).
+	
+	% Status percept, send on change.
+	forall bel(status(Health, Shield, Energy, Cond, X, Y)), percept(status(NewHealth, NewShield, NewEnergy, NewCond, NewX, NewY))
+		do delete(status(Health, Shield, Energy, Cond, X, Y)) + insert(status(NewHealth, NewShield, NewEnergy, NewCond, NewX, NewY)).
+	
+	% Enemy race percept, send on change.
+	forall percept(enemyRace(EnemyRace)), bel(enemyRace(NotKnown), not(EnemyRace = 'unknown')) do delete(enemyRace(NotKnown)) + insert(enemyRace(EnemyRace)).	
+	
+	% Enemy percept, send always.
+	% Information about the other hostile alive units visible to the player.
+	forall bel(enemy(Type, ID, Health, Shield, Condition, X, Y)), not(percept(enemy(Type, ID, _, _, _, _, _)))
+		do delete(enemy(Type, ID, Health, Shield, Condition, X, Y)).
+	
+	forall percept(enemy(Type, ID, Health, Shield, Condition, X, Y)), not(bel(enemy(Type, ID, _,_,_,_,_)))
+		do insert(enemy(Type, ID, Health, Shield, Condition, X, Y)).
+		
+	% Attacking percept, send always
+	% Information about what id enemy unit is attacking friendly id target.
+	forall percept(attacking(Id, TargetId)), not(bel(attacking(Id, TargetId))) do insert(attacking(Id, TargetId)).
+	forall bel(attacking(Id, TargetId)), not(percept(attacking(Id, TargetId))) do delete(attacking(Id, TargetId)).
+
+	% If you are the scouter and you are being attacked, then adopt a goal to go to your own base.
+	if bel(attacking(EnemyID, ID), self(ID), scout(ID), ownBase(X, Y, Region)), not(bel(map(96,128))) then DistractEnemyBase + delete(goToEnemy).
+	if bel(attacking(EnemyID, ID), self(ID), scout(ID), ownBase(X, Y, Region), map(96,128)) then DistractEnemyBaseSmallMap + delete(goToEnemy).
+		
+	% If you believe that you are the scout and no one is attacking you, and you don't have a believe to go the enemy, then adopt a goal to go the enemy base.
+	if bel(scout(ID), enemyBase(X, Y), attacking), not(bel(attacking(_, ID))), not(bel(goToEnemy)), not(bel(attacking(ID,_))) then delete(attacking).
+	if bel(scout(ID), enemyBase(X, Y), entered(Number)), not(bel(attacking(_, ID))), not(bel(goToEnemy)), not(bel(attacking(ID,_))) then delete(entered(Number)).
+	if bel(scout(ID), enemyBase(X, Y)), not(bel(attacking(_, ID))), not(bel(goToEnemy)) then adopt(goTo(X,Y)) + insert(goToEnemy).
+	
+	% If you are standing somewhere as the scouter, and you know there is an enemy and you are not attacking or being attacked, then adopt a goal to attack that unit.
+
+	if bel(enemyBase(X,Y),ownBase(A,B,RegionID), status(_,_,_,_,C,D), scout(ID), entered(Number)), bel(enemy('Terran Command Center',EnemyID, _,_,_,_,_); enemy('Protoss Nexus',EnemyID, _,_,_,_,_); enemy('Zerg Hatchery',EnemyID, _,_,_,_,_)), 
+			not(bel(attacking(_, ID); attacking(ID, _))), not(bel(attacking)) then delete(entered(Number)).
+	if bel(enemyBase(X,Y),ownBase(A,B,RegionID), status(_,_,_,_,C,D), scout(ID)), bel(enemy('Terran Command Center',EnemyID, _,_,_,_,_); enemy('Protoss Nexus',EnemyID, _,_,_,_,_); enemy('Zerg Hatchery',EnemyID, _,_,_,_,_)), 
+			not(bel(attacking(_, ID); attacking(ID, _))), not(bel(attacking)) then adopt(attack(EnemyID)) + insert(attacking).
+	
+	% If you are the scouter and you are being attacked, then adopt a goal to go to your own base.
+	if bel(attacking(EnemyID, ID), self(ID), scout2(ID), ownBase(X, Y, Region)), not(bel(map(96,128))) then DistractEnemyBase + delete(goToEnemy).
+	if bel(attacking(EnemyID, ID), self(ID), scout2(ID), ownBase(X, Y, Region), map(96,128)) then DistractEnemyBaseSmallMap + delete(goToEnemy).
+		
+	% If you believe that you are the scout and no one is attacking you, and you don't have a believe to go the enemy, then adopt a goal to go the enemy base.
+	if bel(scout2(ID), enemyBase(X, Y), attacking), not(bel(attacking(_, ID))), not(bel(goToEnemy)), not(bel(attacking(ID,_))) then delete(attacking).
+	if bel(scout2(ID), enemyBase(X, Y), entered(Number)), not(bel(attacking(_, ID))), not(bel(goToEnemy)), not(bel(attacking(ID,_))) then delete(entered(Number)).
+	if bel(scout2(ID), enemyBase(X, Y)), not(bel(attacking(_, ID))), not(bel(goToEnemy)) then adopt(goTo(X,Y)) + insert(goToEnemy).
+	
+	% If you are standing somewhere as the scouter, and you know there is an enemy and you are not attacking or being attacked, then adopt a goal to attack that unit.
+	if bel(enemyBase(X,Y),ownBase(A,B,RegionID), status(_,_,_,_,C,D), scout2(ID), entered(Number)), bel(enemy('Terran Command Center',EnemyID, _,_,_,_,_); enemy('Protoss Nexus',EnemyID, _,_,_,_,_); enemy('Zerg Hatchery',EnemyID, _,_,_,_,_)), 
+			not(bel(attacking(_, ID); attacking(ID, _))), not(bel(attacking)) then delete(entered(Number)).
+	if bel(enemyBase(X,Y),ownBase(A,B,RegionID), status(_,_,_,_,C,D), scout2(ID)), bel(enemy('Terran Command Center',EnemyID, _,_,_,_,_); enemy('Protoss Nexus',EnemyID, _,_,_,_,_); enemy('Zerg Hatchery',EnemyID, _,_,_,_,_)), 
+			not(bel(attacking(_, ID); attacking(ID, _))), not(bel(attacking)) then adopt(attack(EnemyID)) + insert(attacking).
+	
+	% If we do not know the location of our own base, ask it from the Controller Agent.
+	if not(bel(ownBase(_,_,_))) then ('control').send(askBaseInfo).
+	
+	if bel(workerActivity(gatheringMinerals)), not(percept(friendly('Protoss Nexus',_,_))) then ('control').send(noNexus).
+	
+	% If the base info was sent, insert it in your belief base.
+	if (_).sent(baseInfo(X,Y,RegionID,A,B)) then insert(ownBase(X,Y,RegionID), regionID(RegionID), enemyBase(A,B)).
+	if (_).sent(baseInfo(X,Y,RegionID)) then insert(ownBase(X,Y,RegionID), regionID(RegionID)).
+	if (_).sent(enemyBase(X,Y)) then insert(enemyBase(X,Y)).
+	
+	% If someone sends us the First Nexus id then insert that.
+	if (_).sent(firstNexus(Id)), not(bel(firstNexus(Id))) then insert(firstNexus(Id)).
+
+	% If someone sent us to scout, and we have that id, and we believe that the coordinates are that of the enemy base and I don't believe that someone is a scouter, 
+	% 	then adopt a goal to go there and insert that you are the scouter. Also, subscribe to the channel scouters and send a message to the Controller Agent that you are scouting.
+	if (_).sent(scout(Id,X,Y)), bel(scout(Id)), not(bel(enemyBase(_,_))) then adopt(goTo(X,Y)) + insert(possibleBase(X,Y,true)).
+	if (_).sent(scout(Id,X,Y)), bel(self(Id)), not(bel(scout(_))) then drop(true) + adopt(goTo(X,Y)) + insert(scout(Id), possibleBase(X,Y,true)) + subscribe(scouters) + ('control').send(scouting).
+	
+	% This only happens when we are on the big map (check happens in the Controller Agent). For the second scout, if someone sent us the details for the second scout
+	%	and you don't believe there is a second scout, then adopt a goal to go to the given location and insert that you are the second scout. Also, subscribe to the channel scouters.
+	if (_).sent(scout2(Id,X,Y)), bel(scout2(Id)), not(bel(enemyBase(_,_))) then adopt(goTo(X,Y)) + insert(possibleBase(X,Y,true)).
+	if (_).sent(scout2(Id,X,Y)), bel(self(Id)), not(bel(scout2(_))) then drop(true) + adopt(goTo(X,Y)) + insert(scout2(Id), possibleBase(X,Y,true)) + subscribe(scouters) + ('control').send(scouting).
+	
+	% If someone sent us the coordinates of the wrong base, and we do not believe that that is a wrong base, then insert that.
+	if (_).sent(wrongBase(X,Y)), not(bel(wrongBase(X,Y))) then insert(wrongBase(X,Y)).
+	
+	% If we are either the first or the second scouter, and we know the location of the enemy base and we are there, but there is no one and we know there is a base
+	% 	and that base is not the enemy base or are own base, then go to that base and delete the current enemy base from our beliefs and insert it as a wrong base.
+	% Also, insert the base that you are going to as the enemy base and sent that to the Controller Agent, the Zealots and the Scouters.
+	if bel((scout(Id);scout2(Id)), possibleBase(X,Y,true), status(_,_,_,_,A,B), difference(X,Y,A,B,4)), not(percept(enemy(_,_,_,_,_,_,_)))
+		then insert(wrongBase(X,Y)) + delete(possibleBase(X,Y,true)) + ('control').send(wrongBase(X,Y)) + (scouters).send(wrongBase(X,Y)).
+	
+	if bel((scout(Id);scout2(Id)), possibleBase(X,Y,true), status(_,_,_,_,A,B), difference(X,Y,A,B, 10), enemy(_,_,_,_,_,C,D), difference(X,Y,C,D,10)) 
+		then insert(enemyBase(X,Y)) + delete(possibleBase(X,Y,true)) + ('control').send(enemyBase(X,Y)) + (scouters).send(enemyBase(X,Y)) + (zealots).send(enemyBase(X,Y)).
+	
+	% Check the building goals.
+	if goal(building(Type,X,Y)), not(bel(constructionSite(X,Y,B))), bel(friendly(Type,_,_)) then insert(building(Type,X,Y)) + ('control').send(builded(Type)) + delete(tryBuilding(Type, X, Y)).
+	
+	% If I have a goal to build a Nexus and I believe in a new Nexus, then I know I have built it and I return to the base.
+	if goal(buildingNexus('Protoss Nexus',X,Y)), bel(friendly('Protoss Nexus',Id,_), not(firstNexus(Id)), ownBase(A,B,_)) then insert(buildingNexus('Protoss Nexus',X,Y)) + adopt(goTo(A,B)) + ('control').send(builded('Protoss Nexus')).
+	
+	% If the controller agent send us to construct a pylon with an id, and I have that id, then I will build it.
+	% For all the constructions, we have implemented a system that fixes the mistake if a building should be constructed but was not constructed.
+	% The tryBuilding predicate helps us achieve this. If we adopt a goal to build something, we insert that we are trying to build that building.
+	% If the building was not built but we don't have a goal, the tryBuilding believe can help us adopt a new goal to build the building that we need. 
+	% If the building was built and we still believe that we are trying to build that building, then we delete that predicate from our belief base.
+	if (_).sent(construct(Id,X,Y)), bel(self(Id)) then adopt(building('Protoss Pylon', X, Y)) + insert(tryBuilding('Protoss Pylon', X, Y)).
+	
+	% If the controller agent send us to construct an assimilator with an id, and I have that id, then I will build it.
+	if (_).sent(buildAssim(Id,X,Y)), bel(self(Id)) then adopt(building('Protoss Assimilator', X, Y)) + insert(tryBuilding('Protoss Assimilator', X, Y)).
+	
+	% If I have the id that the controller sent me, and i believe that there is an assimilator, i need to go and gather gas from there.
+	forall (_).sent(goGatherGas(Id, IdAssim)), bel(self(Id)), goal(gathered(GatherMinerals)) do drop(gathered(GatherMinerals)) + adopt(gathered(IdAssim)).
+	
+	% If the controller agent send us to construct a gateway with an id, and I have that id, then I will build it.
+	if (_).sent(constructGate(Id, X, Y)),  bel(self(Id)) then adopt(building('Protoss Gateway', X, Y)) + insert(tryBuilding('Protoss Gateway', X, Y)).
+
+	% If the controller agent tells us to constuct a Forge with an id, and I have that id, then I will build it.
+	if (_).sent(constructForge(Id, X, Y)), bel(self(Id)) then adopt(building('Protoss Forge', X, Y)) + insert(tryBuilding('Protoss Forge', X, Y)).
+	
+	% If the contoller agent tells us to construct a Photon Cannon with an id, and I have that id, then I will build it.
+	if (_).sent(constructCannon(Id, X, Y)), bel(self(Id)) then adopt(building('Protoss Photon Cannon', X, Y)) + insert(tryBuilding('Protoss Photon Cannon', X, Y)).
+	
+	% If the contoller agent tells us to construct a Shield Battery with an id, and I have that id, then I will build it.
+	if (_).sent(constructBattery(Id, X, Y)), bel(self(Id)) then adopt(building('Protoss Shield Battery', X, Y)) + insert(tryBuilding('Protoss Shield Battery', X, Y)).
+	
+	% If the contoller agent tells us to construct a Cybernetics Core with an id, and I have that id, then I will build it.
+	if (_).sent(constructCore(Id, X, Y)), bel(self(Id)) then adopt(building('Protoss Cybernetics Core', X, Y)) + insert(tryBuilding('Protoss Cybernetics Core', X, Y)).
+	
+	% If the contoller agent tells us to construct a Star Gate with an id, and I have that id, then I will build it.
+	if (_).sent(constructStarGate(Id, X, Y)), bel(self(Id)) then adopt(building('Protoss Stargate', X, Y)) + insert(tryBuilding('Protoss Stargate', X, Y)).
+	
+	% If the contoller agent tells us to construct a Templar Archives with an id, and I have that id, then I will build it.
+    if (_).sent(constructArchives(Id, X, Y)), bel(self(Id)) then adopt(building('Protoss Templar Archives', X, Y)) + insert(tryBuilding('Protoss Templar Archives', X, Y)).
+
+	% If the contoller agent tells us to construct a Cital Of Adún with an id, and I have that id, then I will build it.
+    if (_).sent(constructCitadel(Id, X, Y)), bel(self(Id)) then adopt(building('Protoss Citadel of Adun', X, Y)).
+    
+    if (_).sent(constructNexus(Id,X,Y)), bel(self(Id)) then adopt(building('Protoss Nexus', X, Y)).
+    
+    if (_).sent(build(Type,Id,X,Y)), bel(self(Id)) then adopt(building(Type, X, Y)) + insert(tryBuilding(Type, X, Y)).
+
+    if (_).sent(constructFleet(Id,X,Y)), bel(self(Id)) then adopt(building('Protoss Beacon Fleet', X, Y)).
+    
+    % If the controller tells us to expand the base, we go to a base.
+    if (_).sent(expandBase(Id)), bel(self(Id), base(X,Y,false,_)) then adopt(goToBase(X,Y)).
+
+    
+    % If you don't have a goal to build a certain building, but you believe that you are trying to build that building, adopt the goal to build that building. 
+    if not(goal(building(Type, X, Y))), bel(tryBuilding(Type, X, Y)) then adopt(building(Type, X, Y)).
+    
+    % If an enemy is attacking us and there is no probe to protect us counter our own tactic! (attack, chase away).
+    if bel(not(friendly("Protoss Zealot",_,_)), attacking(EnemyId,Id), self(Id), not(scout(Id)), not(scout2(Id)))
+    	then ('control').send(counterOwnTactic(EnemyId)).
+    
+    % If it is needed to counter our own tactic, set it as a goal
+    if (_).sent(counterOwnTactic(Id,EnemyId)), bel(self(Id))
+    	then adopt(attackOwnTactic(EnemyId)).
+    
+    % If it was needed to counter our own tactic, but the enemy is dead or fleed, drop the goal.
+    if goal(attackOwnTactic(EnemyId)), bel(not(enemy(_, EnemyId, _, _, _, _, _)))
+    	then drop(attackOwnTactic(EnemyId)) + ('control').send(dropCounterOwnTactic).
+    
+    % If it was needed to counter our own tactic, but the enemy is no longer attacking, drop the goal.
+    if goal(attackOwnTactic(EnemyId)), bel(not(attacking(EnemyId,_))) then
+    	drop(attackOwnTactic(EnemyId)) + ('control').send(dropCounterOwnTactic).
+    	
+    % If it was needed to counter our own tactic, but the enemy is out of range, drop the goal.
+    if goal(attackOwnTactic(EnemyId)), bel(enemy(_,EnemyId,_,_,_,X,Y), ownBase(A,B,_),
+    	Dist is sqrt((X-A)^2 + (Y-B)^2), Dist > 20) then
+    	drop(attackOwnTactic(EnemyId)) + ('control').send(dropCounterOwnTactic).
+    	
+    % If it was needed to counter our own tactic, but we are too far from the base, drop the goal.
+    if goal(attackOwnTactic(EnemyId)), not(percept(friendly("Protoss Nexus", _, _))) then
+    	drop(attackOwnTactic(EnemyId)) + ('control').send(dropCounterOwnTactic).
+}

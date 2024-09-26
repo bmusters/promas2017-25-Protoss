@@ -1,0 +1,120 @@
+use ControllerAgent as knowledge.
+use Gather as module.
+use BuildOrder as module.
+use Attack as module.
+use BaseInfo as module.
+use Defend as module. 
+use StandardUpdates as module.
+
+module ControllerAgentEvent {
+	
+	% Go to the Standard Updates.
+	if true then StandardUpdates.
+	
+	% If we do not know the bases than go to the buildorder.
+	if not(bel(ownBase(_,_,_))) then BaseInfo.
+	
+	% Insert the first Nexus in the belief.
+	if bel(nexusIds(Id)), not(bel(firstNexus(_))) then insert(firstNexus(Id)) + (nexus).send(firstNexus(Id)).
+	
+	% If the probe is an agent we want to know that.
+	forall (_).sent(self(Id)) do insert(probeId(Id)).
+	forall (_).sent(self(Id)), bel(firstNexus(NexusId)) do (probes).send(firstNexus(NexusId)).
+	
+	% We want to know the first Nexus.
+	if (_).sent(nexusSelf(Id)), not(bel(nexusId(Id))) then insert(nexusId(Id)).
+	
+	% We want to store all the agentnames with their ids, such that it becomes easier when debugging.
+	% For each agent that sends us ther id and type, we store its name id, and type.
+	forall (AgentName).sent(agent(Id, Type)) do insert(agent(AgentName, Id, Type)).
+	
+	% For each id that a zealot sends us, store it.
+	forall (AgentName).sent(zealotSelf(Id)), not(bel(zealotId(Id))) do insert(zealotId(Id)).
+	forall (AgentName).sent(zealotSelf(Id)), bel(allIn) do (AgentName).send(move).
+	
+	% For each id that a zealot sends us, store it.
+	forall (AgentName).sent(dragoonSelf(Id)), not(bel(dragoonId(Id))) do insert(dragoonId(Id)).
+	forall (AgentName).sent(dragoonSelf(Id)), bel(allIn) do (AgentName).send(move).
+	
+	% If the agent sent us that he builded a certain building, and we believe that that is the case, we insert that the building has been built and delete the old belief, 
+	%	that the probe is building the building. 
+	forall (AgentName).sent(builded(Type)), bel(building(Type, AgentName)) do insert(builded(Type, AgentName)) + delete(building(Type, AgentName)).	
+	
+	% If anyone asks for the base info, we send them all the information about the enemy base and own base.
+	forall (AgentName).sent(askBaseInfo), bel(ownBase(X,Y,RegionID), enemyBase(A,B)) do (AgentName).send(baseInfo(X,Y,RegionID,A,B)).
+	
+	% If anyone asks for the base info, we send them all the information about the enemy base and own base.
+	forall (AgentName).sent(askBaseInfo), bel(ownBase(X,Y,RegionID)), not(bel(enemyBase(_,_))) do (AgentName).send(baseInfo(X,Y,RegionID)).
+	
+	% If we believe that some one sent you that it has builded a certain building, and that is the right building with the current list and we believe now that it is a friendly building
+	%	and we believe in a current index and that incremented index is a goal, we delete the current index and insert the next index.
+	if (_).sent(builded(Type)), bel(nextBuilding(Type), friendly(Type,_,_), nextStage(Int), M is Int + 1), goal(nextStage(M)) 
+		then delete(nextStage(Int)) + insert(nextStage(M)).
+	
+	% If you have two Nexusses, resume the build order list.
+	if bel(amountOf('Protoss Nexus',2), nextStage(Int), M is Int + 1),not(bel(expanded)), goal(nextStage(M)) 
+		then delete(nextStage(Int)) + insert(nextStage(M), expanded).
+		
+		% If you have two Nexusses, resume the build order list.
+	if bel(amountOf('Protoss Assimilator',1), nextStage(Int), M is Int + 1),not(bel(buildedAssim)), goal(nextStage(M)) 
+		then delete(nextStage(Int)) + insert(nextStage(M), buildedAssim).
+		
+	% If someone sent training, and we believe that the current item in the list is to create an unit and we have a current index and the incremented index is a goal, 
+	%	then delete the current index and insert the next index.	
+	if (_).sent(training), bel(nextBuilding(createUnit(Type, Amount)), nextStage(Int), M is Int + 1), goal(nextStage(M)) 
+		then delete(nextStage(Int)) + insert(nextStage(M)).
+	
+	% If someone sent scouting, and we believe that the current item in the list is scouting and we have a current index and the incremented index is a goal, 
+	%	then delete the current index and insert the next index.
+	if (_).sent(scouting), bel(nextBuilding(scouting), nextStage(Int), M is Int + 1), goal(nextStage(M)) 
+		then delete(nextStage(Int)) + insert(nextStage(M)). 
+		
+	forall (AgentName).sent(scouting), bel(scoutToBase(Id, X, Y, false), agent(AgentName, Id, _)) do delete(scoutToBase(Id, X, Y, false)) + insert(scoutToBase(Id, X, Y, true)).
+	
+	% If we don't believe that we have a scouter, and the counter for the base is 0, the current item in the list is scouting and we have an index in our belief,
+	% 	and we know the enemy base and we pick a random id from the probes, then send to the probe channel that the probe with that id should scout and adopt a goal for the next index. 
+	% Also, delete that id such that the controller can't send it orders to build and insert that id as the scouters id. Delete the counter base 0 and insert the counterbase 1.
+	if not(bel(scouting(_))), bel(counterBase(0), nextBuilding(scouting), nextStage(Int), Next is Int + 1, enemyBase(X,Y), probeIds(Id), map(96,128))
+		then (probes).send(scout(Id,X,Y)) + adopt(nextStage(Next)) + delete(probeId(Id), counterBase(0)) + insert(scouting(Id), counterBase(1)) + insert(scoutToBase(Id, X, Y, false)).
+		
+	% If we don't believe that we have a scouter, and the counter for the base is 0, the current item in the list is scouting and we have an index in our belief,
+	% 	and we know the enemy base and we pick a random id from the probes, then send to the probe channel that the probe with that id should scout and adopt a goal for the next index. 
+	% Also, delete that id such that the controller can't send it orders to build and insert that id as the scouters id. Delete the counter base 0 and insert the counterbase 1.
+	if not(bel(scouting(_))), bel(counterBase(0), nextBuilding(scouting), nextStage(Int), Next is Int + 1, possibleBase(X,Y,false), probeIds(Id)), not(bel(map(96,128)))
+		then (probes).send(scout(Id,X,Y)) + adopt(nextStage(Next)) + delete(probeId(Id), counterBase(0), possibleBase(X,Y,false)) + insert(scouting(Id), counterBase(1)) + insert(scoutToBase(Id, X, Y, false)).
+	
+	% This is only for the big map. We want to send two scouts to scout if we are on the big map.
+	% If we believe in counter base 1 and the map(128,128) ( <-- this is the big map ) and we believe in the enemyBase coordinates
+	% 	and a base location that is not our own base or the enemybase and we pick a random id from the probes and that id is not the same as our scouter
+	% 		and we don't believe in the counter base 2, then we send to the probe with that id to scout that base location and we delete it's id and insert it as the second scouter id.
+	% We also delete the counter base 1 and insert counter base 2, such that it only sends one message to the probes.   
+	if bel(counterBase(1), possibleBase(X,Y,false), probeIds(Id), not(scouting(Id))), not(bel(counterBase(2))), not(bel(map(96,128)))
+		then (probes).send(scout2(Id,X,Y)) + delete(probeId(Id), counterBase(1), possibleBase(X,Y,false)) + insert(scouting2(Id), counterBase(2)) + insert(scoutToBase(Id, X, Y, false)).
+		
+	forall bel(scoutToBase(Id, X, Y, false)) do (probes).send(scout(Id,X,Y)).	
+
+	% If the scout reports a wrong base, delete it and send it another possible base location
+	if (AgentName).sent(wrongBase(X,Y)), bel(possibleBase(A,B,false), agent(AgentName, ID, Type), scouting(ID)), not(bel(enemyBase(_,_))) then (AgentName).send(scout(ID, A,B)) + delete(possibleBase(A,B,false)).
+	if (AgentName).sent(wrongBase(X,Y)), bel(possibleBase(A,B,false), agent(AgentName, ID, Type), scouting2(ID)), not(bel(enemyBase(_,_))) then (AgentName).send(scout2(ID, A,B)) + delete(possibleBase(A,B,false)).
+		
+	% If the enemyBase is sent then insert it.
+	if (_).sent(enemyBase(X,Y)), not(bel(enemyBase(X,Y))) then insert(enemyBase(X,Y)).
+	
+	% If the enemyBase is known send it to the others
+	if bel(enemyBase(X,Y), ownBase(A,B,RegionID), not(updatedEnemyBase)), not(bel(map(96,128))) then (scouters).send(baseInfo(A,B,RegionID,X,Y)) + (probes).send(baseInfo(A,B,RegionID,X,Y)) + (zealots).send(baseInfo(A,B,RegionID,X,Y)) + insert(updatedEnemyBase).
+
+	% Go to the buildorder.
+	if true then BuildOrder.
+	
+	% Go to gather actions.
+	if true then Gather.
+	
+	% Go to defend module.
+	if true then Defend.
+	
+	% Go to attack module.
+	if true then Attack.
+	
+	
+	
+}

@@ -1,0 +1,15 @@
+use ControllerAgent as knowledge.
+exit = always.
+order = linearall.
+
+
+module Gather {
+	
+	% We have a counter implemented in this code, such that it is easier to control if we want more probes to gather gas from our Assimilator.
+	% We pick a random id from the probes and if we have a friendly Assimilator and we believe that we have an agent with that id and we don't believe that
+	% 	someone is gathering gas and the counter is not 1, we then send to the probes the id's of the Assimilator and the probe himself, so that the probe can go and gather some gas.
+	% We delete the id of that probe and insert it as the gas gatherer and we insert the agentname that he is gathering gas. We also delete the current counter index and insert the incremented index. 
+	if bel(probeIds(Id), friendly("Protoss Assimilator",IdAssim,_), agent(AgentName, Id, Type),counterGas(Index), NextIndex is Index + 1), not(bel(gatheringGas(_), counterGas(3))) 
+		then (probes).send(goGatherGas(Id, IdAssim)) + delete(probeId(Id), counterGas(Index)) + insert(gatheringGas(AgentName), counterGas(NextIndex), gasIds(Id)).
+	
+}

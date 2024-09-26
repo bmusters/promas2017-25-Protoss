@@ -1,0 +1,42 @@
+use SimpleAgentProtoss as mas.
+use ProtossNexus.ProtossNexus as knowledge.
+use ProtossNexus.ProtossNexus as module.
+use ProtossProbe.ProtossProbe as knowledge.
+timeout=66. 
+
+test ProtossNexus with
+	in{ 
+		
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Testing the buildorder %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		%Test if at some point we have a least 7 Probes
+		eventually bel(aggregate_all(count,(friendly(Type,ID,_), member(Type,['Protoss Probe'])),L), 
+						L >= 7).
+	
+		%Test if at some point we have a least 8 Zealots
+		eventually bel(  (aggregate_all(count,friendly('Protoss Zealot',ID,_),L),
+						L >= 8 ) ).
+		
+		%Test if at some point we have a least 3 Pylons
+		eventually bel(aggregate_all(count,(friendly(Type,ID,_), member(Type,['Protoss Pylon'])),L), 
+						L >= 3).
+					
+		%Test if at some point we have a least 1 assimilator	
+		eventually bel(aggregate_all(count,(friendly(Type,ID,_), member(Type,['Protoss Assimilator'])),L), 
+						L >= 1).
+		
+		%Test if at some point we have a least 2 Gateways
+		eventually bel(aggregate_all(count,(friendly(Type,ID,_), member(Type,['Protoss Gateway'])),L), 
+						L >= 2).
+		%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+		
+		
+		%If there is the goal to have a certain amount of a certain type, the believe amountOf is updated to the right amount after the training is completed				
+		a-goal(amountOf(Type,Amount)) leadsto bel(amountOf(Type,Amount)).
+		
+	}
+
+mainBase {
+	do ProtossNexus.
+}
+

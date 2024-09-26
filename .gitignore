@@ -1,0 +1,4 @@
+.project
+.git
+#ignore everything starting with a tilde, '~', in every directory:
+**/~*.*

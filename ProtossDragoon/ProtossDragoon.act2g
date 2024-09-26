@@ -1,0 +1,16 @@
+use ProtossDragoon as knowledge.
+
+% attack action, that attacks the id.
+define attack(Id) with
+	pre { true }
+	post { true }
+	
+% attack action, that attacks the X,Y.
+define attack(X,Y) with
+	pre { true }
+	post { true }
+	
+% The move action, move to the given (X,Y) coordinate.
+define move(X,Y) with
+	pre{true}
+	post{true}

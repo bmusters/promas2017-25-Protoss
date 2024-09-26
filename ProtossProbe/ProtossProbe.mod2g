@@ -1,0 +1,28 @@
+use ProtossProbe as knowledge.
+use ProtossProbe as actionspec.
+
+module ProtossProbe {
+	% If you have a goal to attack an enemy with an id, then attack that enemy. 
+	if goal(attackOwnTactic(EnemyId)) then attack(EnemyId).
+	
+	% If we need to build a Nexus and we're not doing anything or gathering minerals, start building.
+	if goal(buildingNexus(Type,X,Y)), bel(workerActivity(idling);workerActivity(gatheringMinerals)) then build(Type,X,Y).
+	
+	% If I have a goal to go to a base then drop the goal move there and adopt a goal to build a Nexus.
+	if goal(goToBase(X,Y)) then drop(goToBase(X,Y)) + move(X,Y) + adopt(buildingNexus('Protoss Nexus',X,Y)).
+	
+	% If you have a goal to go somewhere, drop the goal and move to that location.
+	if goal(goTo(X,Y)) then drop(goTo(X,Y)) + move(X,Y).
+	
+	% If you have a goal to attack an enemy with an id, then attack that enemy. 
+	if goal(attack(EnemyId)) then drop(attack(EnemyId)) + attack(EnemyId).
+	
+	% If we need to build something and we're not doing anything or gathering minerals, start building.
+	if goal(building(Type,X,Y)), bel(workerActivity(idling);workerActivity(gatheringMinerals)) then build(Type,X,Y).
+	
+	% If we need to gather minerals, and we're not doing anything, start gathering minerals.
+	if goal(gathered(Id)), bel(workerActivity(idling)), not(bel(scout(_); scout2(_))) then gather(Id).
+	
+	% If you have a goal to gather from an Assimilator, but you are still gathering minerals, and you are not a scouter then go and gather from that Assimilator.
+	if goal(gathered(Id)), bel(friendly('Protoss Assimilator', Id,_), workerActivity(gatheringMinerals)), not(bel(scout(_);scout2(_))) then gather(Id).
+}

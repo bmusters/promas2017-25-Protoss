@@ -1,0 +1,37 @@
+use ProtossProbe as knowledge.
+
+module ProtossProbeInit {
+	% Store our own identifier and initial state (updated in event).
+	if percept(self(Id,UnitType,_,_,_)), percept(workerActivity(Activity)) then insert(self(Id), workerActivity(Activity)) + ('control').send(self(Id)) + ('control').send(agent(Id, UnitType)).
+	
+	% Map percept.
+	if percept(map(Width, Height)) then insert(map(Width, Height)).
+	if bel(map(Width,Height), X is Width/2, Y is Height/2) then insert(mapMiddle(X,Y)).
+	
+	% Initial storage of the mineral field identifiers (amounts are updated in event).
+	forall percept(mineralField(Id,Amount,RegionID,X,Y)) do insert(mineralField(Id,Amount,RegionID,X,Y)).
+	
+	% Base percept.
+	forall percept(base(X,Y,IsStart,RegionId)) do insert(base(X,Y,IsStart,RegionId)).
+	
+	% Status percept.
+	if percept(status(Health, Shield, Energy, Cond, X, Y)) then insert(status(Health, Shield, Energy, Cond, X, Y)).
+	
+	% Self percept, send once. The ID and type of the unit. Also gives information about the maximum health, shield and energy of the unit.
+	forall percept(self(ID, UnitType, MaxHealth, MaxShield, MaxEnergy)) do insert(self(ID, UnitType, MaxHealth, MaxShield, MaxEnergy)).
+	
+	% Recourses percept, send once. 
+	forall percept(resources(Minerals, Gas, Cs, Ts)) do insert(resources(Minerals, Gas, Cs, Ts)).
+	
+	% Enemy race percept, send on chagne. The type of the enemy race at the beginning 
+	forall percept(enemyRace(EnemyRace)) do insert(enemyRace(EnemyRace)).
+	
+	% When initialized, ask the info from the control.
+	if true then ('control').send(askBaseInfo).
+	
+	% Base percept with false
+ 	forall bel(base(X,Y,false, RegionID)) do insert(possibleBase(X,Y,false)).
+	
+	% Subscribe to the probe channel, used for communication by the controller agent
+	if true then subscribe(probes).
+}

@@ -1,0 +1,16 @@
+use ControllerAgent as knowledge.
+
+module ControllerAgentInit {
+
+	% Insert the resources in the beginning.
+	if true then insert(resources(50,0,0,0)).
+	
+	% Start the buildorder.
+	if true then insert(nextStage(0)).
+	
+	% Start the counter for gathering gas.
+	if true then insert(counterGas(0)).
+	
+	% Counter for the base percept.
+	if true then insert(counterBase(0)).
+}

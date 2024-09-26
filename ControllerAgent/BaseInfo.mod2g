@@ -1,0 +1,28 @@
+use ControllerAgent as knowledge.
+exit = always.
+order = linearall.
+
+module BaseInfo {
+	
+	% We want to know the map and its size
+	if (_).sent(map(Width, Height)), not(bel(map(Width, Height))) then insert(map(Width, Height)).
+	
+	% We want to know every base location on the map.
+	forall (_).sent(base(X,Y,IsStart,RegionId)), not(bel(base(X,Y,IsStart,RegionId))) do insert(base(X,Y,IsStart,RegionId)).
+	
+	% We want to insert all possibleBases to send our scouts to
+	forall (_).sent(base(X,Y,true,RegionID)) do insert(possibleBase(X,Y, false)).
+		
+	% We want to know every chokepoint.
+	forall (_).sent(chokepoint(X, Y, W)), not(bel(chokepoint(X, Y, W))) do insert(chokepoint(X,Y,W)).
+		
+	% The coordinates of the ownBase predicate and the base percept can be a little bit different, we filtered the mistake out with this line of code.
+	% If we believe in our own base, and a base percept with the coordinates differense being less or equal to three, we insert that base percept as our own base and delete the old one.
+	if bel(ownBase(X,Y), base(A, B, true, RegionId), realOwnBase(X,Y,A,B)) then delete(possibleBase(A,B,false)) + insert(ownBase(A, B, RegionId)) + delete(base(A,B,true,RegionId)).
+	
+	% We want to know the coordinates of our own base.
+	if (_).sent(ownBase(X, Y)) then insert(ownBase(X, Y)).
+	
+	% If we believe in the coordinates of our own base and we believe in another start base, insert that base as the enemy base.
+	if bel(ownBase(X,Y,Z), base(OtherX, OtherY,true,RegionId), not(X=OtherX), not(Y=OtherY)), not(bel(map(128,128))) then insert(enemyBase(OtherX, OtherY)).
+}

@@ -1,0 +1,35 @@
+use ProtossStargate as knowledge.
+use ProtossStargate as actionspec.
+
+module ProtossStargateEvent {	
+	% Frinedly percept.
+	forall bel(friendly(Type,Id,Conditions)), not(percept(friendly(Type,Id,Conditions))) do delete(friendly(Type,Id,Conditions)).
+	forall percept(friendly(Type,Id,Conditions)), not(bel(friendly(Type,Id,Conditions))) do insert(friendly(Type,Id,Conditions)).
+	
+	% Handle the resources percept.
+	forall bel(resources(M,G,CS,TS)), not(percept(resources(M,G,CS,TS))) do delete(resources(M,G,CS,TS)).
+	forall percept(resources(M ,G,CS,TS)), not(bel(resources(M,G,CS,TS))) do insert(resources(M,G,CS,TS)).
+	
+	% Keep the queueSize up-to-date.	
+	forall bel(queueSize(Size)), percept(queueSize(NewSize))
+		do delete(queueSize(Size)) + insert(queueSize(NewSize)).
+	
+	% If the controller wants us to create an amount of Corsairs, we creat that amount of Corsairs.
+	if (_).sent(createCorsair(Amount)) then adopt(amountOf('Protoss Corsair', Amount)) + insert(creating('Protoss Corsair', Amount)).
+	
+	% If we have more Gateways we need to train units quicker, so we let the remaining Gateways also adopt the goal to train the Corsairs.
+	if (_).sent(createCorsair(Amount)), not(goal(amountOf('Protoss Corsair', Amount))) then adopt(amountOf('Protoss Corsair', Amount)) + insert(creating('Protoss Corsair', Amount)).
+	
+	% If you have a goal to train Corsairs, send that to the other Stargates. It might be that they were not initialized when the goal was sent by the controller agent.
+	if goal(amountOf('Protoss Corsair', Amount)) then (gateWay).send(createCorsair(Amount)).
+	
+	% If the controller wants us to create an amount of Corsairs, we creat that amount of Corsairs.
+	if (_).sent(createCarrier(Amount)) then adopt(amountOf('Protoss Carrier', Amount)) + insert(creating('Protoss Carrier', Amount)).
+	
+	% If we have more Gateways we need to train units quicker, so we let the remaining Gateways also adopt the goal to train the Carriers.
+	if (_).sent(createCarrier(Amount)), not(goal(amountOf('Protoss Carrier', Amount))) then adopt(amountOf('Protoss Carrier', Amount)) + insert(creating('Protoss Carrier', Amount)).
+	
+	% If you have a goal to train Carriers, send that to the other Gateways. It might be that they were not initialized when the goal was sent by the controller agent.
+	if goal(amountOf('Protoss Carrier', Amount)) then (gateWay).send(createCarrier(Amount)).
+	
+}

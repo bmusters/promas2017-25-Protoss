@@ -1,0 +1,6 @@
+use ProtossStargate as knowledge.
+
+% The train action, trains a certain type.
+define train(Type) with 
+	pre { true }
+	post { true }

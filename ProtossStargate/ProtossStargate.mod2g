@@ -1,0 +1,14 @@
+use ProtossStargate as knowledge.
+use ProtossStargate as actionspec.
+
+module ProtossStargate {
+	% We need to have a goal of amountOf('Unit Type', amount) and we need to have enough minerals to train a Carrier unit. The amount must be greater than the amount we have in our belief.
+	% Since the queueSize percept can be a bit slower in the game, we have to update it manually so we know for sure that the queueSize works.  
+	if goal(amountOf('Protoss Carrier', X)), bel(resources(Minerals, Gas, Cs, Ts), Minerals >= 350, Gas >=250, amountOf('Protoss Carrier', Y), X>Y, queueSize(Size),M is Size + 1, Z is Size + Y, Z < X, Size < 2)
+		then train('Protoss Carrier') + delete(queueSize(Size)) + insert(queueSize(M)).
+		
+	% We need to have a goal of amountOf('Unit Type', amount) and we need to have enough minerals to train a Corsair unit. The amount must be greater than the amount we have in our belief.
+	% Since the queueSize percept can be a bit slower in the game, we have to update it manually so we know for sure that the queueSize works.  
+	if goal(amountOf('Protoss Corsair', X)), bel(resources(Minerals, Gas, Cs, Ts), Minerals >= 150, Gas>= 150, amountOf('Protoss Corsair', Y), X>Y, queueSize(Size),M is Size + 1, Z is Size + Y, Z < X, Size < 2)
+		then train('Protoss Corsair') + delete(queueSize(Size)) + insert(queueSize(M)).
+}

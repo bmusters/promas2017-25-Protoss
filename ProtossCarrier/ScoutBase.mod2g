@@ -1,0 +1,34 @@
+use ProtossCarrier as knowledge.
+exit = always.
+order = linearall.
+
+module ScoutBase {
+	
+% Go walk around the enemy base to detect the enemies.
+	if bel(enemyBase(X,Y), C is Y - 10, checkMap(X,C,map(K,L), G, H)), not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(G,H)) + insert(entered(1)).
+	if bel(enemyBase(X,Y), C is Y - 10, entered(1), status(_,_,_,_,M,N), checkMap(X,C,map(K,L), G, H), difference(M,N,G,H,2)) then delete(entered(1)). 
+	
+	if bel(enemyBase(X,Y), C is Y - 10, D is X - 10, checkMap(D,C,map(K,L), G, H)),  not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(G,H)) + insert(entered(2)).
+	if bel(enemyBase(X,Y), C is Y - 10, D is X - 10, entered(2), status(_,_,_,_,M,N), checkMap(D,C,map(K,L), G, H), difference(M,N,G,H,2)) then delete(entered(2)).
+	
+	if bel(enemyBase(X,Y), D is X - 10, checkMap(D,Y,map(K,L), G, H)),  not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(G,H)) + insert(entered(3)).
+	if bel(enemyBase(X,Y), D is X - 10, entered(3), status(_,_,_,_,M,N), difference(M,N,G,H,2), checkMap(D,Y,map(K,L), G, H))  then delete(entered(3)).
+	
+	if bel(enemyBase(X,Y), B is Y + 10, D is X - 10, checkMap(D, B,map(K,L), G, H)),  not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(G,H)) + insert(entered(4)).
+	if bel(enemyBase(X,Y), B is Y + 10, D is X - 10, entered(4), status(_,_,_,_,M,N), difference(M,N,G,H,2), checkMap(D,B,map(K,L), G, H)) then delete(entered(4)).
+	
+	if bel(enemyBase(X,Y), B is Y + 10, checkMap(X,B,map(K,L), G, H)),  not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(G,H)) + insert(entered(5)).
+	if bel(enemyBase(X,Y), B is Y + 10, entered(5), status(_,_,_,_,M,N), difference(M,N,G,H,2), checkMap(X,B,map(K,L), G, H))  then delete(entered(5)).
+	
+	if bel(enemyBase(X,Y), A is X + 10, B is Y + 10, checkMap(D,C,map(K,L), G, H)),  not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(G,H)) + insert(entered(6)).
+	if bel(enemyBase(X,Y), A is X + 10, B is Y + 10, entered(6), status(_,_,_,_,M,N), difference(M,N,G,H,2), checkMap(A,B,map(K,L), G, H)) then delete(entered(6)).
+	
+	if bel(enemyBase(X,Y), A is X + 10, checkMap(A,Y,map(K,L), G, H)),  not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(G,H)) + insert(entered(7)).
+	if bel(enemyBase(X,Y), A is X + 10, entered(7), status(_,_,_,_,M,N), checkMap(A,Y,map(K,L), G, H), difference(M,N,G,H,2))  then delete(entered(7)).
+	
+	if bel(enemyBase(X,Y), A is X + 10, C is Y - 10, checkMap(A,C,map(K,L), G, H)),  not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(G,H)) + insert(entered(8)).
+	if bel(enemyBase(X,Y), A is X + 10, C is Y - 10, entered(8), status(_,_,_,_,M,N), difference(M,N,G,H,2), checkMap(A,C,map(K,L), G, H)) then delete(entered(8)).
+	
+	if bel(enemyBase(X,Y), C is Y - 10, checkMap(X,C,map(K,L), G, H)), not(bel(entered(_))), not(goal(goTo(_,_))) then adopt(goTo(G,H)) + insert(entered(1)).
+
+}

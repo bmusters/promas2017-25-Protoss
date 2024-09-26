@@ -1,0 +1,23 @@
+use ProtossCorsair as knowledge.
+use ProtossCorsair as actionspec.
+
+module ProtossCorsairInit {
+	
+	% Store our own identifier and initial state (updated in event).
+	if percept(self(Id,UnitType,_,_,_)), percept(workerActivity(Activity)) then insert(self(Id)) + ('control').send(agent(Id, UnitType)).
+	
+	% The status percept.
+	if percept(status(Health, Shield, Energy, Cond, X, Y)) then insert(status(Health, Shield, Energy, Cond, X, Y)).
+	
+	% Self percept, send once. The ID and type of the unit. Also gives information about the maximum health, shield and energy of the unit.
+	forall percept(self(ID, UnitType, MaxHealth, MaxShield, MaxEnergy)) do insert(self(ID, UnitType, MaxHealth, MaxShield, MaxEnergy)).
+	
+	% Recourses percept, send once. 
+	forall percept(resources(Minerals, Gas, Cs, Ts)) do insert(resources(Minerals, Gas, Cs, Ts)).
+	
+	% Once initialized, ask the base info from the control.
+	if true then ('control').send(askBaseInfo).
+	
+	% When initialized then subscribe to the channel darktemplar.
+	if true then subscribe(corsairs).
+}

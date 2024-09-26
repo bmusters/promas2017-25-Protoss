@@ -1,0 +1,35 @@
+use ControllerAgent as knowledge.
+exit = always.
+order = linearall.
+
+module StandardUpdates {
+	
+	% Keep track of who is friendly. The nexus sends this to the controller agent.
+	forall (_).sent(friendly(Type,Id,Conditions)), not(bel(friendly(Type,Id,Conditions))) do insert(friendly(Type,Id,Conditions)).
+	forall (_).sent(not(friendly(Type,Id,Conditions))), bel(friendly(Type,Id,Conditions)) do delete(friendly(Type,Id,Conditions)).
+	
+	% The nexus keeps the controller agent up-to-date with the resources, and the agent deletes his old one.
+	forall (_).sent(resources(NewMinerals, NewGas, NewCs, NewTs)), bel(resources(OldMinerals,OldGas,OldCs,OldTs))
+		 do delete(resources(OldMinerals,OldGas,OldCs,OldTs)) + insert(resources(NewMinerals, NewGas, NewCs, NewTs)).
+	
+	% We want to know every constructionSite, the probes send this information to us.
+	forall (_).sent(not(constructionSite(X,Y,B))), bel(constructionSite(X,Y,B)) do delete(constructionSite(X,Y,B)).
+	forall (_).sent(constructionSite(X,Y,B)), not(bel(constructionSite(X,Y,B))) do insert(constructionSite(X,Y,B)).
+	
+	% We want to know the enemyRace, sent by the nexus.
+	forall (_).sent(enemyRace(Enemy)), bel(enemyRace(OtherEnemy), not(Enemy = "unknown")) do delete(enemyRace(OtherEnemy)) + insert(enemyRace(Enemy)).
+	forall (_).sent(enemyRace(Enemy)), not(bel(enemyRace(Enemy))) do insert(enemyRace(Enemy)).
+	
+	% We want to know what the enemies are and where they are
+	forall (_).sent(enemy(Type, ID, Health, Shield, Condition, X, Y)), not(bel(enemy(Type, ID, Health, Shield, Condition, X, Y))) do insert(enemy(Type, ID, Health, Shield, Condition, X, Y)).
+	forall (_).sent(not(enemy(Type, ID, Health, Shield, Condition, X, Y))), bel(enemy(Type, ID, Health, Shield, Condition, X, Y)) do delete(enemy(Type, ID, Health, Shield, Condition, X, Y)).
+	
+	% We want to know the whereabouts of the vespeneGeyser, the probes send this to us.
+	forall (_).sent(not(vespeneGeyser(A,B,C,X,Y))), bel(vespeneGeyser(A,B,C,X,Y)) do delete(vespeneGeyser(A,B,C,X,Y)).
+	forall (_).sent(vespeneGeyser(A,B,C,X,Y)), not(bel(vespeneGeyser(A,B,C,X,Y))) do insert(vespeneGeyser(A,B,C,X,Y)).
+	
+	% We want to know what enemy is attacking what unit
+	forall (_).sent(attacking(EnemyId, BuildingId)), not(bel(attacking(EnemyId, BuildingId))) do insert(attacking(EnemyId, BuildingId)).
+	forall (_).sent(not(attacking(EnemyId, BuildingId))), bel(attacking(EnemyId, BuildingId)) do delete(attacking(EnemyId, BuildingId)).
+	
+}

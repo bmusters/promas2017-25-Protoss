@@ -1,0 +1,16 @@
+use ProtossCorsair as knowledge.
+
+% Attack action, that attacks the id.
+define attack(Id) with
+	pre { true }
+	post { true }
+	
+% Attack action, that attacks the X,Y.
+define attack(X,Y) with
+	pre { true }
+	post { true }
+	
+% The move action, move to the given (X,Y) coordinate.
+define goTo(X,Y) with
+	pre{true}
+	post{true}

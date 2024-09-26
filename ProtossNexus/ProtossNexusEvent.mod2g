@@ -1,0 +1,39 @@
+use ProtossNexus as knowledge.
+use ProtossNexus as actionspec.
+
+module ProtossNexusEvent {	
+	% Friendly percept.
+	forall bel(friendly(Type,Id,Conditions)), not(percept(friendly(Type,Id,Conditions))) do delete(friendly(Type,Id,Conditions))+ ('control').send(not(friendly(Type,Id,Conditions))).
+	forall percept(friendly(Type,Id,Conditions)), not(bel(friendly(Type,Id,Conditions))) do insert(friendly(Type,Id,Conditions)) + ('control').send(friendly(Type,Id,Conditions)).	
+	
+	% Resourses, send on change.
+	% The amount of minerals, gas and supply available to the player 
+	if bel(resources(Minerals, Gas, Cs, Ts)), percept(resources(NewMinerals, NewGas, NewCs, NewTs)) 
+			then delete(resources(Minerals, Gas, Cs, Ts)) + insert(resources(NewMinerals, NewGas, NewCs, NewTs)) + ('control').send(resources(NewMinerals, NewGas, NewCs, NewTs)).
+	
+	% Keep the queueSize up-to-date.	
+	if bel(queueSize(Size)), percept(queueSize(NewSize))
+		then delete(queueSize(Size)) + insert(queueSize(NewSize)).
+			
+	% Enemy percept, send always
+	% Information about the other hostile alive units visible to the player.
+	forall bel(enemy(Type, ID, Health, Shield, Condition, X, Y)), not(percept(enemy(Type, ID, _, _, _, _, _)))
+		do delete(enemy(Type, ID, Health, Shield, Condition, X, Y)) + ('control').send(not(enemy(Type, ID, Health, Shield, Condition, X, Y))).
+	
+	forall percept(enemy(Type, ID, Health, Shield, Condition, X, Y)), not(bel(enemy(Type, ID, _,_,_,_,_)))
+		do insert(enemy(Type, ID, Health, Shield, Condition, X, Y))+ ('control').send((enemy(Type, ID, Health, Shield, Condition, X, Y))).
+		
+	% If I am the first Nexus, insert that.
+	if (_).sent(firstNexus(Id)), bel(self(Id, _, _, _, _)) then insert(firstNexus(Id)) + (probes).send(firstNexus(Id)).
+		
+	% Enemy race percept, send on change.
+	if bel(enemyRace(NotKnown)), percept(enemyRace(EnemyRace)) then delete(enemyRace(NotKnown)) + insert(enemyRace(EnemyRace)).
+	
+	% Attacking percept, send always
+	% Information about what id enemy unit is attacking friendly id target.
+	forall percept(attacking(Id, TargetId)), not(bel(attacking(Id, TargetId))) do insert(attacking(Id, TargetId)) + ('control').send(attacking(Id, TargetId)).
+	forall bel(attacking(Id, TargetId)), not(percept(attacking(Id, TargetId))) do delete(attacking(Id, TargetId)) + ('control').send(attacking(Id, TargetId)).
+	
+	% If the controller sent that the nexus should train probes than adopt that goal and send to the control that we are training.
+	if (_).sent(createProbes(Amount)) then adopt(amountOf('Protoss Probe', Amount)) + ('control').send(training).
+}

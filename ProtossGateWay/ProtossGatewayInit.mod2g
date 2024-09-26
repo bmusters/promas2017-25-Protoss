@@ -1,0 +1,14 @@
+use ProtossGateway as knowledge.
+use ProtossGateway as actionspec.
+
+module ProtossGatewayInit {	
+	
+	% Store our own identifier and initial state (updated in event).
+	if percept(self(Id,_,_,_,_)) then insert(self(Id)).
+	
+	% Update the queueSize at the beginning.
+	if percept(queueSize(Size)) then insert(queueSize(Size)).
+	
+	% Subscribe to the gateWay channel, used for communication by the controller agent.
+	if true then subscribe(gateWay).
+}

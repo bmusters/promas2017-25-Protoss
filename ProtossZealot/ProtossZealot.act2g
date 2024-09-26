@@ -1,0 +1,26 @@
+use ProtossZealot as knowledge.
+
+% The attack/2 action, moves to the location (X,Y) and attack everything there.
+define attack(X,Y) with
+	pre { true }
+	post { true }
+	
+% The attack/1 action. attacks the enemy with that id.
+define attack(Id) with
+	pre { not(attacking(Id)) }
+	post { true }
+	
+% The stop action, stops with whatever action it was doing.
+define stop with
+	pre { true }
+	post { true }
+	
+	
+% the move action, move to the location (X,Y).	
+define move(X,Y) with
+	pre{ true }
+	post{ true }
+	
+define patrol(X,Y) with
+	pre { true } 
+	post { true }

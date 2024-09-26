@@ -1,0 +1,21 @@
+use SimpleAgentProtoss as mas.
+use ProtossProbe.ProtossProbe as knowledge.
+use ProtossProbe.ProtossProbe as module.
+
+timeout=30.
+
+test ProtossProbe with
+	in{ 
+		
+		%Test if the probes are carrying minerals at some point in the game
+		eventually bel(friendly(Type,_,Conditions), member(Type,['Protoss Probe']), 
+						member(carrying,Conditions)).
+		
+		%Test if a building is build if there is the goal to build that building				
+		a-goal(building(Type, X, Y)) leadsto bel(building(Type, X, Y)).
+	}
+
+protossProbe {
+	do ProtossProbe.
+}
+

@@ -1,0 +1,15 @@
+use ProtossDarkTemplar as knowledge.
+use ProtossDarkTemplar as actionspec.
+
+module ProtossDarkTemplar {
+	
+	% If a goal is to have attacked some enemy with an id, then attack!
+	if goal(attack(Id)) then drop(attack(Id)) + attack(Id).
+	
+	% If you have a goal to attack with a location (X,Y), then move to that location and attack everything.
+	if goal(attack(X,Y)) then drop(attack(X,Y)) + attack(X,Y).
+	
+	% If you have a goal to go somewhere, then move there.
+	if goal(goTo(X,Y)) then drop(goTo(X,Y)) + goTo(X,Y).
+	
+}

@@ -1,0 +1,57 @@
+use ProtossCarrier as knowledge.
+use ProtossCarrier as actionspec.
+
+use ScoutBase as module.
+
+module ProtossCarrierEvent {
+	
+	% Resources, send on change.
+	% The amount of minerals, gas and supply available to the player. 
+	forall bel(resources(Minerals, Gas, Cs, Ts)), percept(resources(NewMinerals, NewGas, NewCs, NewTs)) 
+		do delete(resources(Minerals, Gas, Cs, Ts)) + insert(resources(NewMinerals, NewGas, NewCs, NewTs)).
+	
+	% Friendly percept, send always.
+	% Information about all the other (alive) units of the player.
+	forall percept(friendly(Type, ID, Condition)), not(bel(friendly(Type, ID, Condition))) do insert(friendly(Type, ID, Condition)).
+	forall bel(friendly(Type, ID, Condition)), not(percept(friendly(Type, ID, Condition))) do delete(friendly(Type, ID, Condition)).
+		
+	% Enemy percept, send always.
+	forall bel(enemy(Type, ID, Health, Shield, Condition, X, Y)), not(percept(enemy(Type, ID, _, _, _, _, _)))
+		do delete(enemy(Type, ID, Health, Shield, Condition, X, Y)).
+	forall percept(enemy(Type, ID, Health, Shield, Condition, X, Y)), not(bel(enemy(Type, ID, _,_,_,_,_)))
+		do insert(enemy(Type, ID, Health, Shield, Condition, X, Y)).
+		
+	% Status percept.	
+	forall bel(status(Health, Shield, Energy, Cond, X, Y)), percept(status(NewHealth, NewShield, NewEnergy, NewCond, NewX, NewY))
+		do delete(status(Health, Shield, Energy, Cond, X, Y)) + insert(status(NewHealth, NewShield, NewEnergy, NewCond, NewX, NewY)).	
+	
+	if bel(resources(Minerals, _, _, _), Minerals > 25) then adopt(train('Protoss Interceptor')).
+	
+	% If the base info was sent, insert it in your belief base.
+	if (_).sent(baseInfo(X,Y,RegionID,A,B)) then insert(ownBase(X,Y,RegionID), enemyBase(A,B)).
+	if (_).sent(baseInfo(X,Y,RegionID)) then insert(ownBase(X,Y,RegionID)).
+	if (_).sent(enemyBase(X,Y)) then insert(enemyBase(X,Y)).
+			
+	% If someone sent us the enemy base and we alrady believe in one, delete the old one and insert the new enemy base location.
+	if (_).sent(enemyBase(X,Y)), bel(enemyBase(C,D)) then delete(enemyBase(C,D)) + insert(enemyBase(X,Y)).
+	
+	% If you get the order insert it
+	if (_).sent(move), not(bel(move)) then insert(move).
+	
+	% If your are not moving, and get send to move. Then move and attack the enemy.
+	if bel(enemyBase(X,Y), status(Health, Shield, Energy,Condition, A, B), move, not(member(moving, Condition))), not(bel(orderToAttack)) then adopt(attack(X,Y)) + insert(orderToAttack).
+		
+	if bel(status(Health, Shield, Energy,Condition, X, Y), member(idle, Condition), attacking(Id)) then delete(attacking(Id)).	
+				
+	% Creating attacking targets
+	if bel(enemy(Type,Id,_,_,_,A,B), status(_,_,_,_,X,Y), difference(A,B,X,Y, 15)), not(goal(attack(_))), not(bel(attacking(_))),  not(bel(memberOfAirUnits(Type))) then adopt(attack(Id)) + insert(attacking(Id)).
+	if bel(enemy(Type,Id,_,_,_,A,B), status(_,_,_,_,X,Y), orderToAttack, difference(A,B,X,Y, 20)), not(goal(attack(_))), not(bel(attacking(_))),  not(bel(memberOfGroundUnits(Type); memberOfAirUnits(Type))) then adopt(attack(A,B)) + insert(attacking(Id)).
+	if bel(attacking(Id)), goal(attack(Id)), not(bel(enemy(_,Id,_,_,_,_,_))) then drop(attack(Id)) + delete(attacking(Id)).
+	if bel(attacking(Id)), not(bel(enemy(_,Id,_,_,_,_,_))) then delete(attacking(Id)).
+	if bel(status(Health, Shield, Energy,Condition, X, Y), member(idle, Condition), attacking(Id)) then delete(attacking(Id)).	
+	% Searching for enemy buildings
+	if bel(status(Health, Shield, Energy,Condition, X, Y), enemyBase(X,Y), member(idle, Condition)), not(bel(enemy(_,_,_,_,_,_,_))), not(goal(attack(_,_))) then ScoutBase.
+	
+	% Not percepting anything so go To enemyBase
+	if bel(status(Health, Shield, Energy,Condition, X, Y), member(idle, Condition), enemyBase(A,B), not(attacking(Id)), orderToAttack), not(bel(attacking(_))), not(goal(attack(_,_))), not(goal(goTo(_,_))) then adopt(attack(A,B)).
+}

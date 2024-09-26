@@ -1,0 +1,54 @@
+use ProtossGateway as knowledge.
+use ProtossGateway as actionspec.
+
+module ProtossGatewayEvent {
+	
+	% The friendly percept.
+	forall bel(friendly(Type,Id,Conditions)), not(percept(friendly(Type,Id,Conditions))) do delete(friendly(Type,Id,Conditions)).
+	forall percept(friendly(Type,Id,Conditions)), not(bel(friendly(Type,Id,Conditions))) do insert(friendly(Type,Id,Conditions)).
+	
+	% Handle the resources percept.
+	forall bel(resources(M,G,CS,TS)), not(percept(resources(M,G,CS,TS))) do delete(resources(M,G,CS,TS)).
+	forall percept(resources(M ,G,CS,TS)), not(bel(resources(M,G,CS,TS))) do insert(resources(M,G,CS,TS)).
+	
+	% Keep the queueSize up-to-date.	
+	forall bel(queueSize(Size)), percept(queueSize(NewSize))
+		do delete(queueSize(Size)) + insert(queueSize(NewSize)).
+		
+	% If the controller wants us to create an amount of Zealots we create that amount of Zealots and wen send to the controller that we are training.
+	% We also insert that we are creating the Zealots.
+	if ('control').sent(createZealots(Amount)), not(goal(amountOf('Protoss Zealot', Amount))) then adopt(amountOf('Protoss Zealot', Amount)) + ('control').send(training) + insert(creating('Protoss Zealot', Amount)).
+	
+	% If we have more Gateways we need to train units quicker, so we let the remaining Gateways also adopt the goal to train the Zealots.
+	if (_).sent(createZealots(Amount)), not(goal(amountOf('Protoss Zealot', Amount))) then adopt(amountOf('Protoss Zealot', Amount)) + insert(creating('Protoss Zealot', Amount)).
+	
+	% If you have a goal to train Zealots, send that to the other Gateways. It might be that they were not initialized when the goal was sent by the controller agent.
+	if goal(amountOf('Protoss Zealot', Amount)) then (gateWay).send(createZealots(Amount)).
+		
+	% If the controller wants us to create an amount of Dragoons we create that amount of Dragoons and wen send to the controller that we are training.
+	% We also insert that we are creating the Dragoons.
+	if ('control').sent(createDragoon(Amount)), not(goal(amountOf('Protoss Dragoon', Amount))) then adopt(amountOf('Protoss Dragoon', Amount)) + ('control').send(training).
+	
+	% If we have more Gateways we need to train units quicker, so we let the remaining Gateways also adopt the goal to train the Dragoons.
+	if (_).sent(createDragoon(Amount)), not(goal(amountOf('Protoss Dragoon', Amount))) then adopt(amountOf('Protoss Dragoon', Amount)).
+	
+	% If you have a goal to train Dragoons, send that to the other Gateways. It might be that they were not initialized when the goal was sent by the controller agent.
+	if goal(amountOf('Protoss Dragoon', Amount)) then (gateWay).send(createDragoon(Amount)).
+	
+	% If the controller wants us to create an amount of Dark Templars we create that amount of Dark Templars and wen send to the controller that we are training.
+	% We also insert that we are creating the Dark Templars.
+	if ('control').sent(createDarkTemplar(Amount)), not(goal(amountOf('Protoss Dark Templar', Amount))) then adopt(amountOf('Protoss Dark Templar', Amount)) + ('control').send(training).
+	
+	% If we have more Gateways we need to train units quicker, so we let the remaining Gateways also adopt the goal to train the Dark Templars.
+	if (_).sent(createDarkTemplar(Amount)), not(goal(amountOf('Protoss Dark Templar', Amount))) then adopt(amountOf('Protoss Dark Templar', Amount)).
+	
+	% If you have a goal to train Dark Templars, send that to the other Gateways. It might be that they were not initialized when the goal was sent by the controller agent.
+	if goal(amountOf('Protoss Dark Templar', Amount)) then (gateWay).send(createDarkTemplar(Amount)).
+	
+	% If you believe that you are creating a certain amount of a certain unit, and you don't have the goal for that, then adopt it.
+	if bel(creating(Type, Amount), amountOf(Type, Current), Current < Amount), not(goal(amountOf(Type, Amount))) then adopt(amountOf(Type, Amount)).
+	
+	% If you believe that you are creating a certain amount of a certain unit, and you have achieved that amount, then delete the creation from the believe.
+	if bel(creating(Type, Amount), amountOf(Type, Amount)) then delete(creating(Type, Amount)).
+	
+}

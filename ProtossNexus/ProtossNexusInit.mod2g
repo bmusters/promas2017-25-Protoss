@@ -1,0 +1,37 @@
+use ProtossNexus as knowledge.
+use ProtossNexus as actionspec.
+
+
+module ProtossNexusInit {	
+	% Recourses percept, send once to initialize. 
+	if percept(resources(Minerals, Gas, Cs, Ts)) then insert(resources(Minerals, Gas, Cs, Ts)).
+	
+	% Self percept, send once. The ID and type of the unit. Also gives information about the maximum health, shield and energy of the unit.
+	if percept(self(ID, UnitType, MaxHealth, MaxShield, MaxEnergy)) then insert(self(ID, UnitType, MaxHealth, MaxShield, MaxEnergy)) + ('control').send(nexusSelf(ID)).
+	
+	% Status percept.
+	if percept(status(Health, Shield, Energy, Cond, X, Y)) then insert(status(Health, Shield, Energy, Cond, X, Y)) + ('control').send(ownBase(X, Y)).
+	
+	% Update the queueSize at the beginning.
+	if percept(queueSize(Size)) then insert(queueSize(Size)).
+	
+	% Enemy race percept, send on chagne. The type of the enemy race at the beginning.
+	if percept(enemyRace(EnemyRace)) then insert(enemyRace(EnemyRace)) + ('control').send(enemyRace(EnemyRace)).
+	
+	% Map percept, send once. Also send to the control.
+	if percept(map(Width, Height)) then insert(map(Width, Height)) + ('control').send(map(Width, Height)).
+	
+	% Base percept, send once. Also send to the control.
+	forall percept(base(X, Y, IsStart, RegionId)) do insert(base(X, Y, IsStart, RegionId)) + ('control').send(base(X, Y, IsStart, RegionId)).
+		
+	% Chokepoint percept, send once. Also send to the control.
+	forall percept(chokepoint(X, Y, W)) do insert(chokepoint(X, Y, W)) + ('control').send(chokepoint(X, Y, W)).
+	
+	% If a probe percepts a chokepoint and sends it to us we dont have it in our perceptbase, but in our believe base so this is necessary
+	forall bel(chokepoint(X,Y,W)) do insert(chokepoint(X,Y,W)) + ('control').send(chokepoint(X,Y,W)).
+	
+	
+	% Subscribe to nexus channel, used for communication by the controller agent.
+	if true then subscribe(nexus).
+	
+}

@@ -1,0 +1,6 @@
+use ProtossForge as knowledge.
+
+%The upgrade action
+define upgrade(Type) with 
+	pre { true }
+	post { true }

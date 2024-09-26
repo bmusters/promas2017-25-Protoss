@@ -1,0 +1,6 @@
+use ProtossGateway as knowledge.
+
+% The train action, trains a certain type unit.
+define train(Type) with 
+	pre { true }
+	post { true }

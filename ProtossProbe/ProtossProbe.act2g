@@ -1,0 +1,26 @@
+use ProtossProbe as knowledge.
+
+% The gather action:
+% Only execute if the field is not already gathered.
+define gather(Id) with
+	pre { not(gathered(Id)) }
+	post { true }
+
+
+% The build action:
+% Only build if we are able to.
+define build(Type, X, Y) with
+	pre{true}
+	post{ true }
+
+% The move action:
+% Only move to a location is you are not building something.	
+define move(X,Y) with
+	pre{not(workerActivity(constructing))}
+	post{true}
+
+% The attack action:
+% Only attack if the target is attackable.	
+define attack(TargetId) with
+	pre {true}
+	post{true}

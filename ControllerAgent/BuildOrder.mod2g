@@ -1,0 +1,96 @@
+use ControllerAgent as knowledge.
+order = linearall.
+exit = always.
+
+module BuildOrder {
+			
+	% If the next item in the list is a Pylon, let one probe build this by sending his id and the coordinates to the probe channel.
+	% Also increment the index and adopt a goal for it and delete the old index.
+	if bel(nextBuilding('Protoss Pylon'), nextStage(Int), Next is Int + 1, probeIds(Id),resources(M,_,_,_), (M>=100), 
+		constructionSite(X,Y,InPylonRange), agent(AgentName, Id, Type)), not(goal(nextStage(Next))) 
+			then (probes).send(construct(Id,X,Y)) + adopt(nextStage(Next)) + insert(building('Protoss Pylon', AgentName)).
+	
+	% If the next item in the list is a chokepylon (a pylon for the chokepoint), let one probe build this by sending his id and the coordinates to the probe channel.
+	% Also increment the index and adopt a goal for it and delete the old index.
+	if bel(nextBuilding(chokepylon), nextStage(Int), Next is Int + 1, probeIds(Id),resources(M,_,_,_), (M>=100), 
+		buildPylonHere(X,Y), agent(AgentName, Id, Type)), not(goal(nextStage(Next))) 
+			then (probes).send(construct(Id,X,Y)) + adopt(nextStage(Next)) + insert(building('Protoss Pylon', AgentName)).			
+		
+	% If the next item in the list is an Assimilator, let one probe build this by sending his id and the coordinates to the probe channel.
+	% Also increment the index and adopt a goal for it and delete the old index.
+	if bel(nextBuilding('Protoss Assimilator'), resources(M,_,_,_), M>=100, vespeneGeyser(_,_,_,X,Y), nextStage(Int), Next is Int + 1,probeIds(Id), agent(AgentName, Id, Type)), not(goal(nextStage(Next)))
+			then (probes).send(buildAssim(Id,X,Y)) + adopt(nextStage(Next)) + insert(building('Protoss Assimilator', AgentName)).
+	
+	% If the next item in the list is a Gateway, let one probe build this by sending his id and the coordinates to the probe channel.
+	% Also increment the index and adopt a goal for it and delete the old index.	
+	if bel(nextBuilding('Protoss Gateway'), constructionSite(X,Y,true), resources(M,_,_,_), M>=150,
+		nextStage(Int), Next is Int + 1,probeIds(Id), agent(AgentName, Id, Type)), not(goal(nextStage(Next)))
+			then (probes).send(constructGate(Id,X,Y)) + adopt(nextStage(Next)) + insert(building('Protoss Gateway', AgentName)).
+
+	% If the next item in the list is a Forge, let one probe build this by sending his id and the coordinates to the probe channel.
+	% Also increment the index and adopt a goal for it and delete the old index.	
+	if bel(nextBuilding('Protoss Forge'), constructionSite(X,Y,true), resources(M,_,_,_), M>=150,
+		nextStage(Int), Next is Int + 1,probeIds(Id), agent(AgentName, Id, Type)), not(goal(nextStage(Next)))
+			then (probes).send(constructForge(Id,X,Y)) + adopt(nextStage(Next)) + insert(building('Protoss Forge', AgentName)).
+			
+	% If the next item in the list is a Cybernetics Core, let one probe build this by sending his id and the coordinates to the probe channel.
+	% Also increment the index and adopt a goal for it and delete the old index.	
+	if bel(nextBuilding('Protoss Cybernetics Core'), constructionSite(X,Y,true), resources(M,_,_,_), M>=200,
+		nextStage(Int), Next is Int + 1,probeIds(Id), agent(AgentName, Id, Type)), not(goal(nextStage(Next)))
+			then (probes).send(constructCore(Id,X,Y)) + adopt(nextStage(Next)) + insert(building('Protoss Cybernetics Core', AgentName)).
+			
+	% If the next item in the list is a Stargate, let one probe build this by sending his id and the coordinates to the probe channel.
+	% Also increment the index and adopt a goal for it and delete the old index.	
+	if bel(nextBuilding('Protoss Stargate'), constructionSite(X,Y,true), resources(M,G,_,_), M>=150, G >= 150, 
+		nextStage(Int), Next is Int + 1,probeIds(Id), agent(AgentName, Id, Type)), not(goal(nextStage(Next)))
+			then (probes).send(constructStarGate(Id,X,Y)) + adopt(nextStage(Next)) + insert(building('Protoss Stargate', AgentName)).
+	
+	% If the next item in the list is a Citadel of Adun, let one probe build this by sending his id and the coordinates to the probe channel.
+	% Also increment the index and adopt a goal for it and delete the old index.			
+    if bel(nextBuilding('Protoss Citadel of Adun'), constructionSite(X,Y,true), resources(M,G,_,_), M>=150,G >= 100,
+        nextStage(Int), Next is Int + 1,probeIds(Id), agent(AgentName, Id, Type)), not(goal(nextStage(Next)))
+            then (probes).send(constructCitadel(Id,X,Y)) + adopt(nextStage(Next)) + insert(building('Protoss Citadel of Adun', AgentName)).    
+
+	% If the next item in the list is a Templar Archives, let one probe build this by sending his id and the coordinates to the probe channel.
+	% Also increment the index and adopt a goal for it and delete the old index.
+    if bel(nextBuilding('Protoss Templar Archives'), constructionSite(X,Y,true), resources(M,G,_,_), M>=150,G >= 200,
+        nextStage(Int), Next is Int + 1,probeIds(Id), agent(AgentName, Id, Type)), not(goal(nextStage(Next)))
+            then (probes).send(constructArchives(Id,X,Y)) + adopt(nextStage(Next)) + insert(building('Protoss Templar Archives', AgentName)).
+   	           	  
+	
+	% If we do not have our base Nexus, we will build it
+	if (_).sent(noNexus), bel(base(X,Y,true,_), probeIds(Id), agent(AgentName,Id,Type)) 
+		then (probes).send(constructNexus(Id,X,Y)) + insert(building('Protoss Nexus', AgentName)).
+		
+	% Rebuilding buildings that only have to be built once, like the Cybernetics Core
+	if bel(builded(Type,SomeAgent), probeIds(Id), agent(AgentName, Id, ProbeType), constructionSite(X,Y,true), aggregate_all(count,friendly(Type,BuildingId,_),K), K = 0) 
+		then (probes).send(build(Type,Id,X,Y)) + insert(building(Type, AgentName)). 
+            
+    % If the next item in the list is a Templar Archives, let one probe build this by sending his id and the coordinates to the probe channel.
+	% Also increment the index and adopt a goal for it and delete the old index.
+    if bel(nextBuilding('Protoss Fleet Beacon'), constructionSite(X,Y,true), resources(M,G,_,_), M>=300,G >= 200,
+        nextStage(Int), Next is Int + 1,probeIds(Id), agent(AgentName, Id, Type)), not(goal(nextStage(Next)))
+            then (probes).send(constructFleet(Id,X,Y)) + adopt(nextStage(Next)) + insert(building('Protoss Fleet Beacon', AgentName)).           
+
+	% If the next item is expanding and you have enough resources, send to the probes to expand the base by building another Nexus.
+	if bel(nextBuilding(expanding), nextStage(Int), Next is Int + 1, resources(M,_,_,_), M >= 400, probeIds(Id), agent(AgentName, Id, Type)), not(goal(nextStage(Next)))
+		then (probes).send(expandBase(Id)) + adopt(nextStage(Next)) + insert(building('Protoss Nexus', AgentName)).				
+
+			
+	% If the next item in the list is createUnit, send the amount to the corresponding building to train that unit. 
+	% Also increment the index and adopt a goal for it and delete the old index.
+	if bel(nextBuilding(createUnit('Protoss Probe', Amount)), nextStage(Int), Next is Int + 1) then (nexus).send(createProbes(Amount)) + adopt(nextStage(Next)).
+	if bel(nextBuilding(createUnit('Protoss Dark Templar', Amount)), nextStage(Int), Next is Int + 1) then (gateWay).send(createDarkTemplar(Amount)) + adopt(nextStage(Next)).
+	if bel(nextBuilding(createUnit('Protoss Zealot', Amount)), nextStage(Int), Next is Int + 1) then (gateWay).send(createZealots(Amount)) + adopt(nextStage(Next)).
+	if bel(nextBuilding(createUnit('Protoss Dragoon', Amount)), nextStage(Int), Next is Int + 1) then (gateWay).send(createDragoon(Amount)) + adopt(nextStage(Next)).
+	if bel(nextBuilding(createUnit('Protoss Carrier', Amount)), nextStage(Int), Next is Int + 1) then (starGate).send(createCarrier(Amount)) + adopt(nextStage(Next)).
+	if bel(nextBuilding(createUnit('Protoss Corsair', Amount)), nextStage(Int), Next is Int + 1) then (starGate).send(createCorsair(Amount)) + adopt(nextStage(Next)).
+	
+	% If the next item in the list is an upgrade, let the corresponding executor know.
+ 	% Also increment the index and adopt a goal for it and delete the old index.
+ 	if bel(nextBuilding(upgradeTo(CostsType)), hasResources(CostsType, ExecutorOut), nextStage(Int), Next is Int + 1)
+ 			then (ExecutorOut).send(upgradeTo(CostsType)) + adopt(nextStage(Next)).
+ 	if (_).sent(upgrading), bel(nextBuilding(upgradeTo(_)), nextStage(Int), M is Int + 1),
+ 		goal(nextStage(M)) then 
+ 		delete(nextStage(Int)) + insert(nextStage(M)).		
+}
